@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: linkplease_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  web:
+    build: .
+    container_name: linkplease_web
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PSEUDOGRAM_API_KEY=${PSEUDOGRAM_API_KEY:-mock_api_key_test}
+      - PSEUDOGRAM_BASE_URL=${PSEUDOGRAM_BASE_URL:-https://pseudogram-api.onrender.com}
+      - MONGODB_URI=mongodb://mongodb:27017
+      - DATABASE_NAME=linkplease
+      - MAX_RETRIES=5
+      - WEBHOOK_SIGNATURE_REQUIRED=false
+      - RATE_LIMIT_REQUESTS=10
+      - RATE_LIMIT_WINDOW_SECONDS=60
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:
