@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+import os
 import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ logging.basicConfig(
 
 logger = logging.getLogger("linkplease")
 
+IS_VERCEL = os.getenv("VERCEL") == "1"
 worker_instance = None
 
 
@@ -30,12 +32,15 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.error(f"Error during db_manager connect: {exc}")
 
-    try:
-        if db_manager.db is not None:
-            worker_instance = DMWorker(db_manager.db)
-            await worker_instance.start()
-    except Exception as exc:
-        logger.error(f"Error starting background DM worker: {exc}")
+    if IS_VERCEL:
+        logger.info("Vercel environment detected; background DM worker disabled.")
+    else:
+        try:
+            if db_manager.db is not None:
+                worker_instance = DMWorker(db_manager.db)
+                await worker_instance.start()
+        except Exception as exc:
+            logger.error(f"Error starting background DM worker: {exc}")
 
     yield
 
@@ -73,8 +78,14 @@ app.include_router(stats.router)
 
 @app.get("/", tags=["Health"])
 async def root():
+    db_status = "connected" if db_manager.db is not None else "disconnected"
+    if db_manager.client and db_manager.client.__class__.__name__ == "AsyncMongoMockClient":
+        db_status = "mock (set MONGODB_URI for persistent storage)"
+
     return {
         "app": "LinkPlease Pseudogram Automation System",
         "status": "online",
-        "docs": "/docs"
+        "docs": "/docs",
+        "database": db_status,
+        "platform": "vercel" if IS_VERCEL else "local"
     }
