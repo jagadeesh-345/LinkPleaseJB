@@ -38,7 +38,6 @@ class WebhookService:
             logger.info(f"event_received: event_id={event_id}, type={event_type}")
         except pymongo.errors.DuplicateKeyError:
             logger.warning(f"event_duplicate: event_id={event_id} already exists. Ignoring gracefully.")
-            # Duplicate event delivered again by mock API, return accepted HTTP 200 safely
             return {"status": "accepted", "detail": "duplicate_event_ignored"}
 
         # 2. Dispatch handling based on event_type
@@ -83,11 +82,9 @@ class WebhookService:
                 await self.db.dm_jobs.insert_one(job.model_dump())
                 logger.info(f"dm_queued: job_id={job.job_id}, rule_id={rule.rule_id}, user_id={user_id}")
             except pymongo.errors.DuplicateKeyError:
-                # User has already received a DM for this rule! Block duplicate safely.
                 logger.info(
                     f"duplicate_dm_blocked: user_id={user_id} has already been processed for rule_id={rule.rule_id}"
                 )
-                # Store block record for stats calculation
                 await self.db.duplicate_blocks.insert_one({
                     "rule_id": rule.rule_id,
                     "user_id": user_id,
@@ -103,7 +100,6 @@ class WebhookService:
             logger.warning(f"comment.deleted event missing comment_id in payload: {payload}")
             return
 
-        # Cancel pending DM jobs for this comment_id if not sent yet
         result = await self.db.dm_jobs.update_many(
             {
                 "comment_id": comment_id,
