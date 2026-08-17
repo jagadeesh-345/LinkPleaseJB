@@ -1,3 +1,5 @@
+
+LIVE LINK: https://linkpleasejb-production-55a4.up.railway.app/
 # LinkPlease Tech Intern Assignment — Production-Quality Backend
 
 A robust, reliable, and production-ready Instagram comment automation backend built with **Python 3.12**, **FastAPI**, and **MongoDB**. The system ingests webhooks, matches rules, deduplicates events and user DMs at the database level, enforces rate limits, handles exponential backoff retries with jitter, reconciles delivery statuses, and exposes real-time statistics.
