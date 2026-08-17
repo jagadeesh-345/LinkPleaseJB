@@ -1,24 +1,18 @@
-# LinkPlease — Pseudogram Automation Backend
+# LinkPlease
 
-This is the backend service for LinkPlease, automating Instagram DMs based on comment keywords. Built for the LinkPlease Tech Intern Assignment.
+LinkPlease automates Instagram for creators. When a user comments a specific keyword, the system automatically sends them the correct DM.
 
-## ?? Live Deployment
-- **Base URL:** [https://linkpleasejb-production-55a4.up.railway.app](https://linkpleasejb-production-55a4.up.railway.app)
-- **API Docs (Swagger):** [https://linkpleasejb-production-55a4.up.railway.app/docs](https://linkpleasejb-production-55a4.up.railway.app/docs)
+Built as a resilient backend to handle a hostile API.
 
-## ?? Tech Stack
-- **Framework:** FastAPI (Python)
-- **Database:** MongoDB (Motor Async Driver)
-- **Deployment:** Railway.app
+## Live URL
+ðŸš€ **Live API / Swagger Docs:** [https://linkpleasejb-production-55a4.up.railway.app/docs](https://linkpleasejb-production-55a4.up.railway.app/docs)
 
-## ? Features Implemented (Parts A, B, & C)
-* **High-Throughput Webhook (`/webhook`):** Non-blocking architecture that guarantees a `200 OK` response within milliseconds.
-* **Idempotency & Duplicate Prevention:** Utilizes strict MongoDB unique indexes to block duplicate `event_id` payloads and ensure a user is never DMed twice for the same rule.
-* **Background Worker:** A custom async worker handles the actual HTTP calls to the Pseudogram API, decoupling external network latency from webhook ingestion.
-* **Rate Limiting:** Asynchronous sliding-window rate limiter respects the strict 10 requests / 60 seconds limit, with exponential backoff on `429` and `500` errors.
-* **HMAC Security:** Cryptographically verifies `X-PseudoGram-Signature` to reject forged webhook requests.
-* **Status Reconciliation:** Continually verifies "accepted" DMs to update final terminal states (Delivered vs Failed).
-* **Comment Deletions:** Gracefully cancels pending/queued DM jobs if a user deletes their comment before dispatch.
-* **Real-time Stats (`/stats`):** Queries live aggregate counts directly from the database for perfect accuracy under load.
+## Features Completed
+- **Part A:** Rule creation, duplicate prevention, background queueing.
+- **Part B:** Webhook HMAC signature verification, accurate live `/stats`.
+- **Part C:** Delivery reconciliation, comment.deleted handling, rate-limit protection.
 
-See `FAILURES.md` for documented edge cases and systemic constraints.
+## Tech Stack
+- FastAPI (Python)
+- MongoDB
+- Railway
