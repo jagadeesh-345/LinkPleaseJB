@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 import httpx
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -79,7 +79,7 @@ class DMService:
                 logger.warning(f"dm_send_retry (429 Rate Limit): job_id={job_id}, retry_after={retry_after}s")
                 await self.rate_limiter.set_cooldown(retry_after)
 
-                next_attempt = datetime.now(timezone.utc) + httpx.math.timedelta(seconds=retry_after) if hasattr(httpx, "math") else calculate_next_attempt(attempt)
+                next_attempt = datetime.now(timezone.utc) + timedelta(seconds=retry_after)
                 await self._schedule_retry(job_id, attempt, next_attempt, f"429 Rate Limited (Retry-After: {retry_after}s)")
 
             elif status_code == 400:
