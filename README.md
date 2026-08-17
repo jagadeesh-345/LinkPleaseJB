@@ -1,4 +1,4 @@
-# LinkPlease — Pseudogram Automation Backend
+# LinkPlease 
 
 This is the backend service for LinkPlease, automating Instagram DMs based on comment keywords. Built for the LinkPlease Tech Intern Assignment.
 
