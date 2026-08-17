@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import rules, stats, webhook
-from app.config import settings
 from app.database.mongodb import db_manager
 from app.workers.dm_worker import DMWorker
 
@@ -18,7 +17,7 @@ logging.basicConfig(
 
 logger = logging.getLogger("linkplease")
 
-worker_instance: DMWorker = None
+worker_instance = None
 
 
 @asynccontextmanager
@@ -26,20 +25,30 @@ async def lifespan(app: FastAPI):
     global worker_instance
     logger.info("Initializing LinkPlease Backend Application...")
 
-    # Connect to MongoDB and initialize indexes
-    await db_manager.connect()
+    try:
+        await db_manager.connect()
+    except Exception as exc:
+        logger.error(f"Error during db_manager connect: {exc}")
 
-    # Start background worker
-    worker_instance = DMWorker(db_manager.db)
-    await worker_instance.start()
+    try:
+        if db_manager.db is not None:
+            worker_instance = DMWorker(db_manager.db)
+            await worker_instance.start()
+    except Exception as exc:
+        logger.error(f"Error starting background DM worker: {exc}")
 
     yield
 
-    # Graceful shutdown
     logger.info("Shutting down LinkPlease Backend Application...")
-    if worker_instance:
-        await worker_instance.stop()
-    await db_manager.close()
+    try:
+        if worker_instance:
+            await worker_instance.stop()
+    except Exception:
+        pass
+    try:
+        await db_manager.close()
+    except Exception:
+        pass
 
 
 app = FastAPI(

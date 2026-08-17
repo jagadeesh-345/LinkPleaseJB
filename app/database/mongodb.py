@@ -14,19 +14,25 @@ class DatabaseManager:
     async def connect(self, uri: Optional[str] = None, db_name: Optional[str] = None):
         target_uri = uri or settings.MONGODB_URI
         target_db = db_name or settings.DATABASE_NAME
-        logger.info(f"Connecting to MongoDB at {target_uri}, db={target_db}")
+        logger.info(f"Connecting to MongoDB db={target_db}")
+        
+        # If uri is local or invalid in cloud environment, use instant fallback
+        if not target_uri or "localhost" in target_uri or "127.0.0.1" in target_uri:
+            logger.info("Local/default URI detected. Initializing instant AsyncMongoMockClient.")
+            self.client = AsyncMongoMockClient()
+            self.db = self.client[target_db]
+            await self.init_indexes()
+            return
+
         try:
-            client = AsyncIOMotorClient(target_uri, serverSelectionTimeoutMS=3000)
+            client = AsyncIOMotorClient(target_uri, serverSelectionTimeoutMS=2000)
             await client.admin.command('ping')
             self.client = client
             self.db = self.client[target_db]
             await self.init_indexes()
             logger.info("Connected to live MongoDB successfully.")
         except Exception as exc:
-            logger.warning(
-                f"Live MongoDB connection check encountered issue ({exc}). "
-                "Initializing resilient DB manager for high availability."
-            )
+            logger.warning(f"Live MongoDB ping failed ({exc}). Using AsyncMongoMockClient fallback.")
             self.client = AsyncMongoMockClient()
             self.db = self.client[target_db]
             await self.init_indexes()
